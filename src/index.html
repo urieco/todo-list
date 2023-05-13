@@ -1,13 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ToDo List</title>
-    <script src="main.js" defer></script>
+    <script src="index.js" defer></script>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <h1>Hello World</h1>
+    <div id="input">
+        <label for="title">Title: 
+            <input type="text" name="title" id="title">
+        </label>
+        <label for="description">Description: 
+            <input type="text" name="description" id="description">
+        </label>
+        <label for="dueDate">Due Date: 
+            <input type="date" name="dueDate" id="dueDate" pattern="\d{4}-\d{2}-\d{2}" required>
+        </label>
+        <label for="priority">Priority:
+            <select name="priority" id="priority">
+                <option value="low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
+            </select>
+        </label>
+        <label for="note">Note: 
+            <textarea name="note" id="note" rows="5"></textarea>
+        </label>
+        <button class="addTask">Add Task</button>
+    </div>
+    <div id="app"></div>
 </body>
+
 </html>
