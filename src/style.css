@@ -4,16 +4,17 @@
     margin: 0; 
     box-sizing: border-box; 
     font-family: 'Times New Roman', Times, serif;
-    /* outline: 1px solid red;  */
+    outline: 1px solid red; 
 }
 
 body { 
     display: flex; 
 }
 
-#input { 
+#input-area { 
     color: white; 
     background-color: #1e40af; 
+    min-height: 100vh; 
 }
 
 label, .addTask { 
@@ -23,20 +24,15 @@ label, .addTask {
     margin: 1em 0.5em; 
 }
 
-input, select {        
+input, select, textarea {        
     font-size: 1rem; 
     padding: 0.25em; 
     border: 0.05em solid black; 
     margin-top: 1em; 
 }
 
-textarea {
-    border: 0.05em solid black;
-    margin-top: 1em;
-}
-
 .addTask { 
-    display: inline;
-    width: 90%;
+    text-align: center;
+    width: 92%;
     padding: 1em; 
 }
