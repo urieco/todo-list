@@ -19,8 +19,7 @@ body {
 }
 
 label,
-.addTask,
-.addList {
+.addTask {
     font-size: 1rem;
     display: flex;
     flex-direction: column;
@@ -36,9 +35,12 @@ textarea {
     margin-top: 1em;
 }
 
-.addTask,
-.addList {
+.addTask {
     text-align: center;
     width: 92%;
     padding: 1em;
+}
+
+.task {
+    display: block;
 }

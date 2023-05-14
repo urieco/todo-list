@@ -1,7 +1,8 @@
 "use strict";
 
 class ToDoItem {
-    constructor(title, description="", dueDate, priority, note = "", finished = false) {
+    constructor(title, description="", dueDate, priority, note = "", 
+    finished = false) {
         this.title = title;
         this.description = description;
         this.dueDate = dueDate;
@@ -41,6 +42,7 @@ class ToDoList {
 }
 
 const listPanel = [];
+let currentList = 0; 
 
 const appLogic = () => {
     let title = document.querySelector("#title").value,
@@ -54,14 +56,32 @@ const appLogic = () => {
     const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", 
     "10", "11", "12"];
     const month = months[current.getMonth()]; 
-    const date = `${current.getFullYear()}-${month}-${current.getDate()}`;
-
-    console.log(dueDate); 
+    const date = `${current.getFullYear()}-${month}-${current.getDate()}`; 
 
     function createTask() {
-        if (!title || dueDate < date) return; 
-        return new ToDoItem(title, description, dueDate, priority, note);
-    }    
+        if (!title || dueDate < date) return;  
+        let newTask = new ToDoItem(title, description, dueDate, priority, note);
+        interactDOM().addTask();
+        document.querySelector(`span[data-task="${listPanel[currentList].list.length}"]`)
+        .textContent = 
+        `\n Title: ${newTask.title} | Due Date: ${dueDate} | Priority: ${priority}`;
+        listPanel[currentList].add(newTask);
+    }
+    
+    function createList() {
+        let newList = new ToDoList(); 
+        listPanel.push(newList); 
+        interactDOM().addList();
+    }
+
+    function pickList(num) {
+        currentList = num;
+    } 
+
+    return { 
+        createTask,
+        createList
+    }
 }
 
 const interactDOM = () => {
@@ -89,21 +109,20 @@ const interactDOM = () => {
         }
     }
 
-    function writeTextContent(selector, textContent) {
-        return document.querySelector(`${selector}`).textContent = textContent; 
+    function addList() { 
+        makeElement(".list")(app)("data-list", listPanel.length-1);
     }
 
-    function addList() { 
-        let newList = new ToDoList(); 
-        makeElement(".list")(app)("data-list", listPanel.length);
-        listPanel.push(newList); 
+    function addTask() { 
+        let pickedList = document.querySelector(`[data-list="${currentList}"]`); 
+        makeElement(".task", "span")(pickedList)("data-task", 
+        listPanel[currentList].list.length);
     }
 
     return { 
         makeElement, 
-        writeTextContent, 
         addList, 
-        // addTask
+        addTask
     }
 }
 
@@ -111,14 +130,15 @@ const interactDOM = () => {
 (function DOMLoad() {
     const inputArea = document.querySelector("#input-area"); 
 
-    const resetBtn = interactDOM().makeElement("#reset", "input")(inputArea)("type", "reset")("style", "visibility: hidden; position: absolute;") 
+    interactDOM().makeElement("#reset", "input")(inputArea)
+    ("type", "reset")("style", "visibility: hidden; position: absolute;"); 
     
     interactDOM().makeElement(".warning")(inputArea);
-    interactDOM().writeTextContent(".warning", "Warning!!!"); 
+    document.querySelector(".warning").textContent = "Warning"; 
 
     document.querySelector(".addTask").addEventListener("click", (e) => {
-        appLogic();
-        document.querySelector("#reset").click(); 
+        appLogic().createTask();
+        // document.querySelector("#reset").click(); 
         e.preventDefault(); 
     });
 })();
@@ -127,9 +147,10 @@ const interactDOM = () => {
     function resetListPanel() { 
         listPanel = []; 
     }
-    interactDOM().addList(); 
 })(); 
 
+// Add a default list: 
+appLogic().createList();
 
 
 
