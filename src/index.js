@@ -1,8 +1,8 @@
 "use strict";
 
 class ToDoItem {
-    constructor(title, description="", dueDate, priority, note = "", 
-    finished = false) {
+    constructor(title, description = "", dueDate, priority, note = "",
+        finished = false) {
         this.title = title;
         this.description = description;
         this.dueDate = dueDate;
@@ -12,7 +12,7 @@ class ToDoItem {
     }
 
     complete() {
-        return this.finished = true;
+        this.finished = true;
     }
 
     getDetail() {
@@ -42,117 +42,178 @@ class ToDoList {
 }
 
 const listPanel = [];
-let currentList = 0; 
+let currentList = 0;
 
 const appLogic = () => {
     let title = document.querySelector("#title").value,
         description = document.querySelector("#description").value,
         dueDate = document.querySelector("#dueDate").value,
         priority = document.querySelector("#priority").value,
-        note = document.querySelector("#note").value; 
+        note = document.querySelector("#note").value;
 
     // Can use date-fns: date = format(new Date(), 'yyyy-MM-dd');     
     const current = new Date();
-    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", 
-    "10", "11", "12"];
-    const month = months[current.getMonth()]; 
-    const date = `${current.getFullYear()}-${month}-${current.getDate()}`; 
+    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09",
+        "10", "11", "12"];
+    const month = months[current.getMonth()];
+    const date = `${current.getFullYear()}-${month}-${current.getDate()}`;
 
     function createTask() {
-        if (!title || dueDate < date) return;  
+        if (!title || dueDate < date) return;
         let newTask = new ToDoItem(title, description, dueDate, priority, note);
-        interactDOM().addTask();
-        document.querySelector(`span[data-task="${listPanel[currentList].list.length}"]`)
-        .textContent = 
-        `\n Title: ${newTask.title} | Due Date: ${dueDate} | Priority: ${priority}`;
+        interactDOM().addTask(title, dueDate, priority);
         listPanel[currentList].add(newTask);
     }
-    
+
     function createList() {
-        let newList = new ToDoList(); 
-        listPanel.push(newList); 
+        let newList = new ToDoList();
+        listPanel.push(newList);
         interactDOM().addList();
+    }
+
+    function finishTask(targetedTaskIndex) {
+        listPanel[currentList].list[targetedTaskIndex].complete();
+    }
+
+    function removeTask(targetedTaskIndex) {
+        listPanel[currentList].list.splice(targetedTaskIndex, 1);
     }
 
     function pickList(num) {
         currentList = num;
-    } 
+    }
 
-    return { 
+    return {
+        createList,
         createTask,
-        createList
+        finishTask,
+        removeTask
     }
 }
 
 const interactDOM = () => {
-    const app = document.querySelector("#app"); 
-     
-    function makeElement(identifier, type="div") { 
+    const app = document.querySelector("#app");
+
+    function makeElement(identifier, type = "div") {
         let newElement = document.createElement(`${type}`);
         if (identifier.slice(0, 1) == ".") {
-            newElement.classList.add(identifier.slice(1)); 
+            newElement.classList.add(identifier.slice(1));
         }
-        if (identifier.slice(0,1) == "#") {
+        if (identifier.slice(0, 1) == "#") {
             newElement.setAttribute("id", identifier.slice(1));
-        }  
-        return function setParent(parent) { 
-            if (parent !== undefined) { 
+        }
+        return function setParent(parent) {
+            if (parent !== undefined) {
                 parent.appendChild(newElement);
-                return function setAttr(type, value) { 
+                return function setAttr(type, value) {
                     if (type !== undefined && value !== undefined) {
                         newElement.setAttribute(`${type}`, `${value}`);
-                        return setAttr; 
-                    }      
-                    else return;
+                        return setAttr;
+                    }
+                    else return newElement;
                 }
-            } else return;
+            } else return newElement;
         }
     }
 
-    function addList() { 
-        makeElement(".list")(app)("data-list", listPanel.length-1);
+    function addList() {
+        makeElement(".list")(app)("data-list", listPanel.length - 1);
     }
 
-    function addTask() { 
-        let pickedList = document.querySelector(`[data-list="${currentList}"]`); 
-        makeElement(".task", "span")(pickedList)("data-task", 
-        listPanel[currentList].list.length);
+    function addTask(title, dueDate, priority) {
+        let pickedList = document.querySelector(`[data-list="${currentList}"]`);
+        let currentTaskOrder = listPanel[currentList].list.length;
+
+        // List name:    
+        if (currentTaskOrder == 0) {
+            let listName = pickedList.getAttribute("name");
+            listName = listName != undefined ? listName : currentList;
+            makeElement(".list-name", "span")(pickedList)()
+                .textContent = `List ${currentList}: `;
+        }
+
+        makeElement(".task", "span")(pickedList)("data-task", currentTaskOrder);
+        let DOMtask = document.querySelector(`span[data-task="${currentTaskOrder}"]`);
+        DOMtask.textContent =
+            `Title: ${title} | Due Date: ${dueDate} | Priority: ${priority}   `;
+
+        let priorityColor = priority == "High" ? "pink"
+            : (priority == "Medium" ? "yellow" : "yellowgreen");
+        DOMtask.setAttribute("style", `background-color: ${priorityColor}`);
+
+        let btnContainer = makeElement(".container")(DOMtask);
+
+        // Finish Btn
+        addButton(".finish", btnContainer());
+
+        // Remove Btn
+        addButton(".remove", btnContainer());
     }
 
-    return { 
-        makeElement, 
-        addList, 
+    function addButton(identifier, parent) {
+        const btn = makeElement(identifier, "button")(parent);
+        // span.task > div.container > button.remove
+        const targetedTaskIndex = Number(btn().parentNode
+            .parentNode.getAttribute("data-task"));
+        if (identifier == ".remove") {
+            btn().textContent = "X";
+            btn().addEventListener("click", () => {
+                btn().parentNode.parentNode.remove();
+                appLogic().removeTask(targetedTaskIndex);
+                resetDataTaskIndex(targetedTaskIndex);
+            });
+        } else {
+            btn().innerHTML = "&#10004;"
+            btn().addEventListener("click", () => {
+                btn().classList.toggle("done")
+                appLogic().finishTask(targetedTaskIndex)
+            });
+        }
+    }
+
+    function resetDataTaskIndex(removedTaskIndex) {
+        let allTasks = document.querySelectorAll
+            (`.list[data-list='${currentList}'] .task`);
+        allTasks.forEach(task => {
+            let checkedTaskIndex = Number(task.getAttribute("data-task"));
+            if (checkedTaskIndex < removedTaskIndex) return;
+            else task.setAttribute("data-task", checkedTaskIndex - 1);
+        });
+    }
+
+
+    return {
+        makeElement,
+        addList,
         addTask
     }
 }
 
 // Interfaces to connect the application logic to the DOM
 (function DOMLoad() {
-    const inputArea = document.querySelector("#input-area"); 
+    const inputArea = document.querySelector("#input-area");
 
     interactDOM().makeElement("#reset", "input")(inputArea)
-    ("type", "reset")("style", "visibility: hidden; position: absolute;"); 
-    
-    interactDOM().makeElement(".warning")(inputArea);
-    document.querySelector(".warning").textContent = "Warning"; 
+        ("type", "reset")("style", "visibility: hidden; position: absolute;");
+
+    let warning = interactDOM().makeElement(".warning")(inputArea);
+    warning().textContent = "Warning";
 
     document.querySelector(".addTask").addEventListener("click", (e) => {
         appLogic().createTask();
         // document.querySelector("#reset").click(); 
-        e.preventDefault(); 
+        e.preventDefault();
     });
 })();
 
-(function test() { 
-    function resetListPanel() { 
-        listPanel = []; 
+(function test() {
+    function resetListPanel() {
+        listPanel = [];
     }
-})(); 
+})();
 
 // Add a default list: 
 appLogic().createList();
-
-
-
+appLogic().createList();
 
 
