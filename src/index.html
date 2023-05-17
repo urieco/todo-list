@@ -13,13 +13,14 @@
 <body>
     <form id="input-area">
         <label for="title">Title:
-            <input type="text" name="title" id="title">
+            <input type="text" name="title" id="title" required>
         </label>
         <label for="description">Description:
             <input type="text" name="description" id="description">
         </label>
         <label for="dueDate">Due Date:
-            <input type="date" name="dueDate" id="dueDate" pattern="\d{4}-\d{2}-\d{2}" required>
+            <input type="date" name="dueDate" id="dueDate" 
+                pattern="\d{4}-\d{2}-\d{2}" required>
         </label>
         <label for="priority">Priority:
             <select name="priority" id="priority">
@@ -33,7 +34,9 @@
         </label>
         <button class="addTask">Add Task</button>
     </form>
-    <div id="app"></div>
+    <div id="app">
+        <div class="scroller-container snaps-inline"></div>
+    </div>
 </body>
 
 </html>

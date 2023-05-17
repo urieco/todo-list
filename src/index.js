@@ -79,10 +79,6 @@ const appLogic = () => {
         listPanel[currentList].list.splice(targetedTaskIndex, 1);
     }
 
-    function pickList(num) {
-        currentList = num;
-    }
-
     return {
         createList,
         createTask,
@@ -117,12 +113,22 @@ const interactDOM = () => {
         }
     }
 
+    function displayTask(list) {
+        document.querySelectorAll("#app > .list").forEach(element => {
+            element.classList.add("hidden");
+        });
+        document.querySelector(`.list[data-list='${list}']`)
+            .classList.remove("hidden");
+    }
+
     function addList() {
+        // list.Panel.length has already been updated -> minus 1
         makeElement(".list")(app)("data-list", listPanel.length - 1);
+        listScroller();
     }
 
     function addTask(title, dueDate, priority, description, note) {
-        let pickedList = document.querySelector(`[data-list="${currentList}"]`);
+        let pickedList = document.querySelector(`.list[data-list="${currentList}"]`);
         let currentTaskOrder = listPanel[currentList].list.length;
 
         // List name:    
@@ -133,16 +139,16 @@ const interactDOM = () => {
                 .textContent = `List ${currentList}: `;
         }
 
-        makeElement(".task", "span")(pickedList)("data-task", currentTaskOrder);
-        let DOMtask = document.querySelector(`span[data-task="${currentTaskOrder}"]`);
-        DOMtask.textContent =
+        let DOMTask = makeElement(".task")(pickedList)("data-task", currentTaskOrder);
+
+        DOMTask().textContent =
             `TITLE: ${title} | DUE DATE: ${dueDate} | PRIORITY: ${priority}   `;
 
         let priorityColor = priority == "High" ? "pink"
             : (priority == "Medium" ? "yellow" : "yellowgreen");
-        DOMtask.setAttribute("style", `background-color: ${priorityColor}`);
+        DOMTask().setAttribute("style", `background-color: ${priorityColor}`);
 
-        let btnContainer = makeElement(".button-container")(DOMtask);
+        let btnContainer = makeElement(".button-container")(DOMTask());
         // Finish Btn
         addButton(".finish", btnContainer());
 
@@ -152,10 +158,10 @@ const interactDOM = () => {
         let details = makeElement(".detail")(pickedList)("data-task", currentTaskOrder);
         details().classList.add("hidden");
         details().innerText = `DESCRIPTION: ${description}\nNOTE: ${note}`;
-        DOMtask.addEventListener("mouseover", () => {
+        DOMTask().addEventListener("mouseover", () => {
             details().classList.toggle("hidden");
         });
-        DOMtask.addEventListener("mouseleave", () => {
+        DOMTask().addEventListener("mouseleave", () => {
             details().classList.toggle("hidden");
         });
     }
@@ -169,7 +175,8 @@ const interactDOM = () => {
             btn().textContent = "X";
             btn().addEventListener("click", () => {
                 btn().parentNode.parentNode.remove();
-                document.querySelector(`.detail[data-task='${targetedTaskIndex}']`).remove();
+                document.querySelector
+                    (`.detail[data-task='${targetedTaskIndex}']`).remove();
                 appLogic().removeTask(targetedTaskIndex);
                 resetDataTaskIndex(targetedTaskIndex);
             });
@@ -192,11 +199,48 @@ const interactDOM = () => {
         });
     }
 
+    function listScroller() {
+        const allScrollerItem = document.querySelectorAll(".scroller-container > div");
+        allScrollerItem.forEach(element => element.remove());
+
+
+        for (let list of listPanel) {
+            const scrollerItem = makeElement(".scroller-item")
+                (document.querySelector(".scroller-container"))
+                ("data-list", listPanel.indexOf(list));
+
+            let listNameIndex = Number(scrollerItem().getAttribute("data-list")),
+                listName = document.querySelector(`.list[data-list='${listNameIndex}']`)
+                    .getAttribute("name");
+            scrollerItem().textContent = listName != undefined ?
+                listName : listNameIndex;
+
+            makeElement(".image", "img")(scrollerItem())("src", "./images/folder.svg");
+
+            scrollerItem().addEventListener("click", () => {
+                document.querySelectorAll(".scroller-item").forEach(element => {
+                    element.classList.remove("selected");
+                })
+                scrollerItem().classList.toggle("selected");
+                currentList = listNameIndex;
+                displayTask(currentList);
+            });
+        }
+
+        let moreList = makeElement(".more-list")
+            (document.querySelector(".scroller-container"));
+
+        moreList().textContent = "+";
+        moreList().addEventListener("click", () => {
+            appLogic().createList();
+        });
+    }
 
     return {
         makeElement,
         addList,
-        addTask
+        addTask,
+        listScroller,
     }
 }
 
@@ -215,6 +259,9 @@ const interactDOM = () => {
         // document.querySelector("#reset").click(); 
         e.preventDefault();
     });
+
+    // Add a default list: 
+    appLogic().createList();
 })();
 
 (function test() {
@@ -223,8 +270,5 @@ const interactDOM = () => {
     }
 })();
 
-// Add a default list: 
-appLogic().createList();
-appLogic().createList();
 
 
