@@ -61,7 +61,7 @@ const appLogic = () => {
     function createTask() {
         if (!title || dueDate < date) return;
         let newTask = new ToDoItem(title, description, dueDate, priority, note);
-        interactDOM().addTask(title, dueDate, priority);
+        interactDOM().addTask(title, dueDate, priority, description, note);
         listPanel[currentList].add(newTask);
     }
 
@@ -112,7 +112,8 @@ const interactDOM = () => {
                     }
                     else return newElement;
                 }
-            } else return newElement;
+            }
+            else return newElement;
         }
     }
 
@@ -120,12 +121,12 @@ const interactDOM = () => {
         makeElement(".list")(app)("data-list", listPanel.length - 1);
     }
 
-    function addTask(title, dueDate, priority) {
+    function addTask(title, dueDate, priority, description, note) {
         let pickedList = document.querySelector(`[data-list="${currentList}"]`);
         let currentTaskOrder = listPanel[currentList].list.length;
 
         // List name:    
-        if (currentTaskOrder == 0) {
+        if (currentTaskOrder == 0 && pickedList.textContent == "") {
             let listName = pickedList.getAttribute("name");
             listName = listName != undefined ? listName : currentList;
             makeElement(".list-name", "span")(pickedList)()
@@ -135,30 +136,40 @@ const interactDOM = () => {
         makeElement(".task", "span")(pickedList)("data-task", currentTaskOrder);
         let DOMtask = document.querySelector(`span[data-task="${currentTaskOrder}"]`);
         DOMtask.textContent =
-            `Title: ${title} | Due Date: ${dueDate} | Priority: ${priority}   `;
+            `TITLE: ${title} | DUE DATE: ${dueDate} | PRIORITY: ${priority}   `;
 
         let priorityColor = priority == "High" ? "pink"
             : (priority == "Medium" ? "yellow" : "yellowgreen");
         DOMtask.setAttribute("style", `background-color: ${priorityColor}`);
 
-        let btnContainer = makeElement(".container")(DOMtask);
-
+        let btnContainer = makeElement(".button-container")(DOMtask);
         // Finish Btn
         addButton(".finish", btnContainer());
 
         // Remove Btn
         addButton(".remove", btnContainer());
+
+        let details = makeElement(".detail")(pickedList)("data-task", currentTaskOrder);
+        details().classList.add("hidden");
+        details().innerText = `DESCRIPTION: ${description}\nNOTE: ${note}`;
+        DOMtask.addEventListener("mouseover", () => {
+            details().classList.toggle("hidden");
+        });
+        DOMtask.addEventListener("mouseleave", () => {
+            details().classList.toggle("hidden");
+        });
     }
 
     function addButton(identifier, parent) {
         const btn = makeElement(identifier, "button")(parent);
-        // span.task > div.container > button.remove
+        // span.task > div.button-container > button.remove
         const targetedTaskIndex = Number(btn().parentNode
             .parentNode.getAttribute("data-task"));
         if (identifier == ".remove") {
             btn().textContent = "X";
             btn().addEventListener("click", () => {
                 btn().parentNode.parentNode.remove();
+                document.querySelector(`.detail[data-task='${targetedTaskIndex}']`).remove();
                 appLogic().removeTask(targetedTaskIndex);
                 resetDataTaskIndex(targetedTaskIndex);
             });
