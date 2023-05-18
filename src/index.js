@@ -59,7 +59,10 @@ const appLogic = () => {
     const date = `${current.getFullYear()}-${month}-${current.getDate()}`;
 
     function createTask() {
-        if (!title || dueDate < date) return;
+        if (!title || dueDate < date) {
+            interactDOM().warning();
+            return;
+        }
         let newTask = new ToDoItem(title, description, dueDate, priority, note);
         interactDOM().addTask(title, dueDate, priority, description, note);
         listPanel[currentList].add(newTask);
@@ -236,11 +239,20 @@ const interactDOM = () => {
         });
     }
 
+    function warning() {
+        let warning = document.querySelector(".warning");
+        warning.textContent = "";
+        if (!document.querySelector("#title").value) {
+            warning.textContent = "*You have to enter a Title!";
+        } else warning.textContent = "*Due Date has to be later than Today!"
+    }
+
     return {
         makeElement,
         addList,
         addTask,
         listScroller,
+        warning
     }
 }
 
@@ -251,9 +263,6 @@ const interactDOM = () => {
     interactDOM().makeElement("#reset", "input")(inputArea)
         ("type", "reset")("style", "visibility: hidden; position: absolute;");
 
-    let warning = interactDOM().makeElement(".warning")(inputArea);
-    warning().textContent = "Warning";
-
     document.querySelector(".addTask").addEventListener("click", (e) => {
         appLogic().createTask();
         // document.querySelector("#reset").click(); 
@@ -262,12 +271,6 @@ const interactDOM = () => {
 
     // Add a default list: 
     appLogic().createList();
-})();
-
-(function test() {
-    function resetListPanel() {
-        listPanel = [];
-    }
 })();
 
 
