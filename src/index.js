@@ -10,14 +10,6 @@ class ToDoItem {
         this.note = note;
         this.finished = finished;
     }
-
-    complete() {
-        this.finished = true;
-    }
-
-    getDetail() {
-        return this;
-    }
 }
 
 class ToDoList {
@@ -41,23 +33,8 @@ class ToDoList {
     }
 }
 
-const listPanel = [];
+let listPanel = [];
 let currentList = 0;
-
-let list1 = new ToDoList();
-let list2 = new ToDoList();
-let list3 = new ToDoList();
-let item1 = new ToDoItem("A", "B", "2023-09-11", "Low");
-let item2 = new ToDoItem("A", "B", "2023-09-12", "Medium");
-let item3 = new ToDoItem("A", "B", "2023-09-13", "High");
-
-list1.add(item1);
-list2.add(item1, item2);
-list3.add(item1, item2, item3);
-
-listPanel.push(list1);
-listPanel.push(list2);
-listPanel.push(list3);
 
 const appLogic = () => {
     let title = document.querySelector("#title").value,
@@ -66,7 +43,7 @@ const appLogic = () => {
         priority = document.querySelector("#priority").value,
         note = document.querySelector("#note").value;
 
-    // Can use date-fns: date = format(new Date(), 'yyyy-MM-dd');     
+    // Can use date-fns: date = format(new Date(), 'yyyy-MM-dd');
     const current = new Date();
     const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09",
         "10", "11", "12"];
@@ -90,7 +67,7 @@ const appLogic = () => {
     }
 
     function finishTask(targetedTaskIndex) {
-        listPanel[currentList].list[targetedTaskIndex].complete();
+        listPanel[currentList].list[targetedTaskIndex].finished = true;
     }
 
     function removeTask(targetedTaskIndex) {
@@ -156,9 +133,9 @@ const interactDOM = () => {
                     task.description, task.note, listPanel.indexOf(listObject));
             }
         }
-        resetDataTaskIndex(); 
+        resetDataTaskIndex();
 
-        displayTask(currentList); 
+        displayTask(currentList);
     }
 
 
@@ -172,12 +149,13 @@ const interactDOM = () => {
         let pickedList = document.querySelector(`.list[data-list="${list}"]`);
         let currentTaskOrder = listPanel[currentList].list.length;
 
-        // List name:    
-        if (currentTaskOrder == 0 && pickedList.textContent == "") {
+        // List name:
+        if (pickedList.textContent == "") {
             let listName = pickedList.getAttribute("name");
-            listName = listName != undefined ? listName : currentList;
-            makeElement(".list-name", "span")(pickedList)()
-                .textContent = `List ${currentList}: `;
+            listName = listName != undefined ? 
+                listName : pickedList.getAttribute("data-list");
+            let nameDisplay = makeElement(".list-name", "span")(pickedList);
+            nameDisplay().textContent = `List ${listName}: `;
         }
 
         let DOMTask = makeElement(".task")(pickedList)("data-task", currentTaskOrder);
@@ -200,10 +178,10 @@ const interactDOM = () => {
         details().classList.add("hidden");
         details().innerText = `DESCRIPTION: ${description}\nNOTE: ${note}`;
         DOMTask().addEventListener("mouseover", () => {
-            details().classList.toggle("hidden");
+            details().classList.remove("hidden");
         });
         DOMTask().addEventListener("mouseleave", () => {
-            details().classList.toggle("hidden");
+            details().classList.add("hidden");
         });
     }
 
@@ -232,14 +210,14 @@ const interactDOM = () => {
 
     function resetDataTaskIndex() {
         document.querySelectorAll(".list").forEach(element => {
-            if (element.hasChildNodes()) { 
+            if (element.hasChildNodes()) {
                 let children = element.childNodes;
                 let u = 0;
-                for (let node of children) { 
+                for (let node of children) {
                     if (node.className == "task") {
-                        node.setAttribute("data-task", u); 
-                        u++; 
-                    }    
+                        node.setAttribute("data-task", u);
+                        u++;
+                    }
                 }
             }
         });
@@ -304,20 +282,38 @@ const interactDOM = () => {
     }
 }
 
+
+
+function restoreFromLocal() {
+    const restoredData = JSON.parse(localStorage.getItem('savedData'));
+
+    if (!restoredData) return listPanel = [];
+    else {
+        for (let listObj of restoredData) {
+            listPanel.push(new ToDoList());
+            listPanel[restoredData.indexOf(listObj)].list = listObj.list;
+        }
+    }
+}
+
 // Interfaces to connect the application logic to the DOM
 (function DOMLoad() {
     const inputArea = document.querySelector("#input-area");
+
+    restoreFromLocal();
+
+    // Default list
+    if (listPanel.length == 0) appLogic().createList();
 
     interactDOM().makeElement("#reset", "input")(inputArea)
         ("type", "reset")("style", "visibility: hidden; position: absolute;");
 
     document.querySelector(".addTask").addEventListener("click", (e) => {
-        appLogic().createTask();
-        // document.querySelector("#reset").click(); 
         e.preventDefault();
+        appLogic().createTask();
+        // document.querySelector("#reset").click();
+        localStorage.setItem('savedData', JSON.stringify(listPanel));
     });
-
-    // Add a default list: 
 
     interactDOM().refreshAllTasks();
 })();
